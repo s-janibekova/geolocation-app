@@ -1,47 +1,109 @@
 <template>
-    <div class="map">
-        <div class="google-map" id="map"></div>
-    </div>
+<div>
+  <div>
+  <a v-if="card" href="#!" class="card blue-grey darken-1 scale-transition">
+   <p class="text"> Кликните на маркер чтобы увидеть пользователя<p/>
+  </a>
+  </div>
+
+  <div class="map">
+    <div class="google-map" id="map"></div>
+  </div>
+  </div>
 </template>
 
 <script>
 import firebase from 'firebase'
+import db from '@/firebase/init'
 export default {
-  name: 'Gmap',
+  name: 'GMap',
   data () {
     return {
-      lat: 43.3,
-      lng: 77
+      lat: 0,
+      lng: 0,
+      card: false
     }
   },
   methods: {
     renderMap () {
-      // eslint-disable-next-line
       const map = new google.maps.Map(document.getElementById('map'), {
         center: { lat: this.lat, lng: this.lng },
-        zoom: 9,
+        zoom: 6,
         maxZoom: 15,
         minZoom: 3,
-        streetViewControl: true
+        streetViewControl: false
+      })
+      db.collection('users').get().then(users => {
+        users.docs.forEach(doc => {
+          let data = doc.data()
+          if (data.geolocation) {
+            let marker = new google.maps.Marker({
+              position: {
+                lat: data.geolocation.lat,
+                lng: data.geolocation.lng
+              },
+              map
+            })
+            // add click event to marker
+            marker.addListener('click', () => {
+              this.$router.push(`/profile/${doc.id}`)
+            })
+          }
+        })
       })
     }
   },
   mounted () {
-    this.renderMap()
-    console.log(firebase.auth().currentUser)
+    // get current user
+    let user = firebase.auth().currentUser
+    // get current location
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(pos => {
+        this.lat = pos.coords.latitude
+        this.lng = pos.coords.longitude
+        // find the user record and then update geocoords
+        db.collection('users').where('user_id', '==', user.uid).get()
+          .then(snapshot => {
+            snapshot.forEach((doc) => {
+              db.collection('users').doc(doc.id).update({
+                geolocation: {
+                  lat: pos.coords.latitude,
+                  lng: pos.coords.longitude
+                }
+              })
+            })
+          }).then(() => {
+            this.renderMap()
+          })
+      }, (err) => {
+        // timeout, centre by default values
+        this.renderMap()
+      }, { maximumAge: 60000, timeout: 3000 }) // cached location
+    } else {
+      // position centre by default values
+      this.renderMap()
+    }
+    setTimeout(() => {
+      this.card = true
+    }, 3000)
   }
 }
 </script>
 
-<style scoped>
-  .google-map {
+<style>
+.google-map {
   width: 100%;
   height: 100%;
   margin: 0 auto;
   background: #fff;
   position: absolute;
-  z-index: -1;
   top: 0;
   left: 0;
-  }
+  z-index: -1;
+}
+
+.text {
+  
+  color: whitesmoke;
+}
 </style>

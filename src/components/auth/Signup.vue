@@ -62,7 +62,7 @@ export default {
                 console.log(error)
                 this.feedback = error.message
               })
-            this.feedback = 'имя свободно'
+            this.feedback = ''
           }
         })
       } else {

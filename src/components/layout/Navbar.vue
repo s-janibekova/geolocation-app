@@ -2,11 +2,12 @@
     <nav class="nav-extended">
       <div class="container">
     <div class="nav-wrapper">
-      <a href="#!" class="brand-logo">Welcome=)</a>
+      <router-link :to="{ name: 'Gmap' }" class="brand-logo">Welcome=)</router-link>
       <ul class="right hide-on-med-and-down">
-        <li><router-link :to="{name: 'Signup'}">Регистрация</router-link></li>
-        <li><router-link :to="{name: 'Login'}">Логин</router-link></li>
-        <li><a @click="logout">Выйти</a></li>
+        <li v-if="!user"><router-link :to="{name: 'Signup'}">Регистрация</router-link></li>
+        <li v-if="!user"><router-link :to="{name: 'Login'}">Логин</router-link></li>
+        <li v-if="user">{{ user.email }}</li>
+        <li v-if="user"><a @click="logout">Выйти</a></li>
       </ul>
     </div>
     <div class="nav-content">
@@ -22,6 +23,7 @@ export default {
   name: 'Navbar',
   data () {
     return {
+      user: null
     }
   },
   methods: {
@@ -30,7 +32,15 @@ export default {
         this.$router.push({ name: 'Signup' })
       })
     }
-
+  },
+  created () {
+    firebase.auth().onAuthStateChanged(user => {
+      if (user) {
+        this.user = user
+      } else {
+        this.user = null
+      }
+    })
   }
 }
 </script>

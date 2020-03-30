@@ -1,7 +1,7 @@
 <template>
     <div class="signup container">
         <form @submit.prevent="onSubmit" class="card-panel">
-            <h2 class="center deep-pink-text">Регистрация</h2>
+            <h2 class="center deep-pink-text">Логин</h2>
             <div class="field">
                 <label for="email">Email</label>
                 <input type="email" name="email" v-model="email">
@@ -33,7 +33,13 @@ export default {
   methods: {
     onSubmit () {
       if (this.email && this.password) {
-        this.feedback = 'good'
+        firebase.auth().signInWithEmailAndPassword(this.email, this.password)
+          .then(user => {
+            this.$router.push({ name: 'Gmap' })
+          }).catch(err => {
+            this.feedback = err.message
+          })
+        this.feedback = null
       } else {
         this.feedback = 'Вы не ввели имя пользователя'
       }
